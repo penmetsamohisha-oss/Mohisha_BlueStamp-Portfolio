@@ -9,7 +9,7 @@ This project features an armband that uses an Arduino Nano ESP32 to perform rout
 # Final Milestone
 
 
-<iframe width="560" height="315" src="[https://www.youtube.com/embed/F7M7imOVGug](https://www.youtube.com/watch?v=qgViM-uNFv4)" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/F7M7imOVGug](https://www.youtube.com/watch?v=qgViM-uNFv4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 After my last milestone, I have made several changes to the Routine Reinforcement Armband. I divided the circuit among two breadboards, added a flex sensor, heart-rate sensor, and OLED display, and created a website to collect real-time sensor data through Bluetooth Low Energy.
 
@@ -28,21 +28,27 @@ In the future, I would like to make the armband smaller and more “wearable” 
 # Second Milestone
 
 **Don't forget to replace the text below with the embedding for your milestone video. Go to Youtube, click Share -> Embed, and copy and paste the code to replace what's below.**
+<iframe width="560" height="315" src="https://www.youtube.com/embed/2T25-TxnDEk?si=ZgSz9lrB-076J5-b](https://www.youtube.com/watch?v=tu1wzGVcvsc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+Ever since I achieved my initial milestone, I have dedicated my time and efforts to completing the foundation of my Routine Reinforcement Armband. I wired and programmed the main components of the armband, namely the MPU6050 movement sensor, TMP36 temperature sensor, buzzer, vibration motor, and mute button. Not only did I implement the wiring, but I also made sure that the armband is able to calibrate and set alert thresholds, which allow it to detect movement and temperature variations.
+
+Perhaps one of the most unexpected aspects of this stage was the technical difficulties I had to overcome to achieve smooth, correct functioning of all components at the same time. It turned out that I had to troubleshoot wiring, check the performance of each individual sensor, calibrate thresholds, and check the efficiency of the motor and buzzer.
 
 
+Combining sensors and outputs to operate together in a single system was one of the toughest challenges faced at this stage. Each element was capable of working independently, but connecting the different elements required changing the wiring and coding to ensure simultaneous operation without any conflicts. 
 
-For your second milestone, explain what you've worked on since your previous milestone. You can highlight:
-- Technical details of what you've accomplished and how they contribute to the final goal
-- What has been surprising about the project so far
-- Previous challenges you faced that you overcame
-- What needs to be completed before your final milestone 
+In the future, I still have to make the armband more wearable, together with all the modifications to my idea.
 
 # First Milestone
 
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/2T25-TxnDEk?si=ZgSz9lrB-076J5-b" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-My project involves the development of a Routine Reinforcement Armband which is intended to monitor a person's movements, body temperature, and to send alerts via vibration. The Arduino ESP32 functions as the device's central unit by gathering data from the accelerometer, the temperature sensor, and managing the vibration motor. In my first milestone, I tested each of the components individually before putting them all together. To begin with, I connected the ESP32 to my computer and uploaded a program which makes an LED blink in order to check that the device was functioning. Next, I tested the vibration motor by writing a program to switch it on and off, checked the accelerometer by observing how its X, Y ,and Z values changed when the device was moved, and tested the temperature sensor by viewing its readings in the Serial Monitor. A difficulty that I encountered was ensuring that the wiring, the pins, the board settings, and the Arduino libraries were all correct. For my next milestone, I intend to combine the sensors so that an alert is triggered if there is movement detected. Later on, I plan to connect the armband to Wi-Fi, set up a website to show the data it collects, as well as design the complete system into a wearable form.
+My project involves the development of a Routine Reinforcement Armband which is intended to monitor a person's movements, body temperature, and to send alerts via vibration. The Arduino ESP32 functions as the device's central unit by gathering data from the accelerometer, the temperature sensor, and managing the vibration motor. In my first milestone, I tested each of the components individually before putting them all together. 
+
+To begin with, I connected the ESP32 to my computer and uploaded a program which makes an LED blink in order to check that the device was functioning. Next, I tested the vibration motor by writing a program to switch it on and off, checked the accelerometer by observing how its X, Y ,and Z values changed when the device was moved, and tested the temperature sensor by viewing its readings in the Serial Monitor. 
+
+A difficulty that I encountered was ensuring that the wiring, the pins, the board settings, and the Arduino libraries were all correct. For my next milestone, I intend to combine the sensors so that an alert is triggered if there is movement detected. Later on, I plan to connect the armband to Wi-Fi, set up a website to show the data it collects, as well as design the complete system into a wearable form.
 
 # Schematics 
 Here's where you'll put images of your schematics. [Tinkercad](https://www.tinkercad.com/blog/official-guide-to-tinkercad-circuits) and [Fritzing](https://fritzing.org/learning/) are both great resoruces to create professional schematic diagrams, though BSE recommends Tinkercad becuase it can be done easily and for free in the browser. 

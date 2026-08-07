@@ -9,7 +9,7 @@ This project features an armband that uses an Arduino Nano ESP32 to perform rout
 # Final Milestone
 
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/F7M7imOVGug](https://www.youtube.com/watch?v=qgViM-uNFv4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/F7M7imOVGug](https://www.youtube.com/watch?v=qgViM-uNFv4](https://www.youtube.com/watch?v=qgViM-uNFv4&t=8s" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 After my last milestone, I have made several changes to the Routine Reinforcement Armband. I divided the circuit among two breadboards, added a flex sensor, heart-rate sensor, and OLED display, and created a website to collect real-time sensor data through Bluetooth Low Energy.
 
@@ -28,7 +28,7 @@ In the future, I would like to make the armband smaller and more “wearable” 
 # Second Milestone
 
 **Don't forget to replace the text below with the embedding for your milestone video. Go to Youtube, click Share -> Embed, and copy and paste the code to replace what's below.**
-<iframe width="560" height="315" src="https://www.youtube.com/embed/2T25-TxnDEk?si=ZgSz9lrB-076J5-b](https://www.youtube.com/watch?v=tu1wzGVcvsc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/2T25-TxnDEk?si=ZgSz9lrB-076J5-b](https://www.youtube.com/watch?v=tu1wzGVcvsc](https://www.youtube.com/watch?v=tu1wzGVcvsc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 Ever since I achieved my initial milestone, I have dedicated my time and efforts to completing the foundation of my Routine Reinforcement Armband. I wired and programmed the main components of the armband, namely the MPU6050 movement sensor, TMP36 temperature sensor, buzzer, vibration motor, and mute button. Not only did I implement the wiring, but I also made sure that the armband is able to calibrate and set alert thresholds, which allow it to detect movement and temperature variations.
 

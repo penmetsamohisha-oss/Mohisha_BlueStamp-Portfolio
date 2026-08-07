@@ -1,27 +1,27 @@
 # Routine Reinforcement Armband
 This project features an armband that uses an Arduino Nano ESP32 to perform routine correspondence by monitoring an individual's movement and temperature while giving instructions through a buzzer and vibration motor. Moreover, I added various sensors, such as a flex sensor to measure arm bending, a heart-rate detector to measure beats per minute, and an OLED display to show all measurements on the device. Additional improvements involve rearranging the components on two breadboards linked together, which makes the armband feasible to wear. Finally, I designed a website to display live readings, alert conditions, and heart-rate and movement graphs by connecting to the controllers via Bluetooth Low Energy. 
 
-```HTML 
-
-```
 | Mohisha P | Aberdeen High School | Biomedical Engineering | Incoming Sophomore |
-
+![Routine Reinforcement Armband](routine-armband.jpg)
 
 **Replace the BlueStamp logo below with an image of yourself and your completed project. Follow the guide [here](https://tomcam.github.io/least-github-pages/adding-images-github-pages-site.html) if you need help.**
 
-![Headstone Image](logo.svg)
-  
 # Final Milestone
 
-**Don't forget to replace the text below with the embedding for your milestone video. Go to Youtube, click Share -> Embed, and copy and paste the code to replace what's below.**
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/F7M7imOVGug" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="560" height="315" src="[https://www.youtube.com/embed/F7M7imOVGug](https://www.youtube.com/watch?v=qgViM-uNFv4)" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-For your final milestone, explain the outcome of your project. Key details to include are:
-- What you've accomplished since your previous milestone
-- What your biggest challenges and triumphs were at BSE
-- A summary of key topics you learned about
-- What you hope to learn in the future after everything you've learned at BSE
+After my last milestone, I have made several changes to the Routine Reinforcement Armband. I divided the circuit among two breadboards, added a flex sensor, heart-rate sensor, and OLED display, and created a website to collect real-time sensor data through Bluetooth Low Energy.
+
+
+The most difficult part was making sure that all parts would work together properly. I had many problems troubleshooting wiring, sensor connections, the power supply, and Bluetooth communication. I consider my biggest achievement to be integrating the hardware, Arduino programming, Bluetooth connectivity, and the website into one working system.
+
+
+While working on the BSE project, I learned more about circuit design, Arduino programming, connecting analog and digital sensors, and debugging. I also learned about Bluetooth Low Energy services and characteristics and how they can be used to send sensor data wirelessly.
+
+
+In the future, I would like to make the armband smaller and more “wearable” by replacing the breadboards with a permanent circuit, adding a battery charger, improving sensor accuracy, and creating a better website that can store and analyze the data over time. 
+
 
 
 

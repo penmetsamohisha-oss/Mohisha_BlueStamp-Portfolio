@@ -1,10 +1,11 @@
 # Routine Reinforcement Armband
 This project features an armband that uses an Arduino Nano ESP32 to perform routine correspondence by monitoring an individual's movement and temperature while giving instructions through a buzzer and vibration motor. Moreover, I added various sensors, such as a flex sensor to measure arm bending, a heart-rate detector to measure beats per minute, and an OLED display to show all measurements on the device. Additional improvements involve rearranging the components on two breadboards linked together, which makes the armband feasible to wear. Finally, I designed a website to display live readings, alert conditions, and heart-rate and movement graphs by connecting to the controllers via Bluetooth Low Energy. 
 
-| Mohisha P | Aberdeen High School | Biomedical Engineering | Incoming Sophomore |
-![Routine Reinforcement Armband](routine-armband.jpg)
+<p>Mohisha P | Aberdeen High School | Biomedical Engineering | Incoming Sophomore</p>
 
-**Replace the BlueStamp logo below with an image of yourself and your completed project. Follow the guide [here](https://tomcam.github.io/least-github-pages/adding-images-github-pages-site.html) if you need help.**
+<img src="routine-armband.jpg" alt="Routine Reinforcement Armband" width="650">
+
+
 
 # Final Milestone
 
@@ -51,21 +52,1829 @@ To begin with, I connected the ESP32 to my computer and uploaded a program which
 A difficulty that I encountered was ensuring that the wiring, the pins, the board settings, and the Arduino libraries were all correct. For my next milestone, I intend to combine the sensors so that an alert is triggered if there is movement detected. Later on, I plan to connect the armband to Wi-Fi, set up a website to show the data it collects, as well as design the complete system into a wearable form.
 
 # Schematics 
-Here's where you'll put images of your schematics. [Tinkercad](https://www.tinkercad.com/blog/official-guide-to-tinkercad-circuits) and [Fritzing](https://fritzing.org/learning/) are both great resoruces to create professional schematic diagrams, though BSE recommends Tinkercad becuase it can be done easily and for free in the browser. 
+<img src="routine-armband-schematic.jpg" alt="Routine Reinforcement Armband Schematic" width="850">
 
 # Code
 Here's where you'll put your code. The syntax below places it into a block of code. Follow the guide [here]([url](https://www.markdownguide.org/extended-syntax/)) to learn how to customize it to your project needs. 
 
 ```c++
+#include <Wire.h>
+
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#include "MAX30105.h"
+#include "heartRate.h"
+
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+
+// =====================================================
+// PINS
+// =====================================================
+
+const int motorPin = D9;
+const int buzzerPin = D2;
+const int buttonPin = D3;
+
+const int tempPin = A0;
+const int flexPin = A1;
+
+// I2C:
+// SDA = A4
+// SCL = A5
+
+// =====================================================
+// OLED
+// =====================================================
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
+#define OLED_ADDRESS 0x3C
+
+Adafruit_SSD1306 display(
+  SCREEN_WIDTH,
+  SCREEN_HEIGHT,
+  &Wire,
+  OLED_RESET
+);
+
+bool oledFound = false;
+
+// =====================================================
+// BUZZER
+// =====================================================
+
+const int buzzerChannel = 0;
+
+// =====================================================
+// MPU6050
+// =====================================================
+
+const int MPU_ADDR = 0x68;
+
+bool accelerometerFound = false;
+
+int16_t baselineX = 0;
+int16_t baselineY = 0;
+int16_t baselineZ = 0;
+
+float movementLevel = 0.0;
+
+const float movementDisplayThreshold = 0.20;
+const float motionAlertThreshold = 0.90;
+
+bool isMoving = false;
+bool motionAlert = false;
+
+unsigned long lastMovementTime = 0;
+
+const unsigned long restingDelay = 5000;
+
+// =====================================================
+// TEMPERATURE
+// =====================================================
+
+float currentTempF = 0.0;
+
+const float lowTempF = 59.0;
+const float highTempF = 104.0;
+
+bool temperatureAlert = false;
+
+// =====================================================
+// FLEX SENSOR
+// =====================================================
+
+int flexBaseline = 0;
+int currentFlexReading = 0;
+int currentFlexChange = 0;
+
+const int flexDeltaThreshold = 200;
+
+bool flexAlert = false;
+
+// =====================================================
+// HEART-RATE SENSOR
+// =====================================================
+
+MAX30105 heartSensor;
+
+bool heartSensorFound = false;
+bool fingerDetected = false;
+
+long infraredReading = 0;
+
+// Lower this if your finger is not detected.
+// Raise it if it detects a finger when nothing is there.
+const long fingerDetectionThreshold = 10000;
+
+const byte RATE_SIZE = 4;
+
+byte bpmReadings[RATE_SIZE];
+
+byte readingPosition = 0;
+byte readingsCollected = 0;
+
+unsigned long previousBeatTime = 0;
+unsigned long lastValidBeatTime = 0;
+
+float currentBPM = 0.0;
+int averageBPM = 0;
+
+// Prototype thresholds only
+const int lowHeartRateBPM = 60;
+const int highHeartRateBPM = 100;
+
+bool heartRateAlert = false;
+bool heartRateLow = false;
+bool heartRateHigh = false;
+
+// =====================================================
+// MUTE BUTTON
+// =====================================================
+
+bool alertsMuted = false;
+bool previousButtonState = HIGH;
+
+// =====================================================
+// BLUETOOTH LOW ENERGY
+// =====================================================
+
+#define BLE_SERVICE_UUID \
+"7e400001-b5a3-f393-e0a9-e50e24dcca9e"
+
+#define BLE_DATA_UUID \
+"7e400003-b5a3-f393-e0a9-e50e24dcca9e"
+
+BLEServer* bleServer = nullptr;
+BLECharacteristic* bleDataCharacteristic = nullptr;
+
+bool bluetoothConnected = false;
+bool previouslyBluetoothConnected = false;
+
+class ArmbandServerCallbacks : public BLEServerCallbacks {
+
+  void onConnect(BLEServer* server) {
+    bluetoothConnected = true;
+  }
+
+  void onDisconnect(BLEServer* server) {
+    bluetoothConnected = false;
+  }
+};
+
+// =====================================================
+// TIMERS
+// =====================================================
+
+unsigned long previousMotionCheck = 0;
+unsigned long previousTemperatureCheck = 0;
+unsigned long previousFlexCheck = 0;
+unsigned long previousOLEDUpdate = 0;
+unsigned long previousDataUpdate = 0;
+
+const unsigned long motionInterval = 20;
+const unsigned long temperatureInterval = 500;
+const unsigned long flexInterval = 50;
+const unsigned long oledInterval = 250;
+const unsigned long dataInterval = 500;
+
+// =====================================================
+// SETUP
+// =====================================================
+
 void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-  Serial.println("Hello World!");
+
+  Serial.begin(115200);
+
+  delay(1000);
+
+  pinMode(motorPin, OUTPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  digitalWrite(motorPin, LOW);
+
+  // Passive buzzer
+  ledcSetup(
+    buzzerChannel,
+    2000,
+    8
+  );
+
+  ledcAttachPin(
+    buzzerPin,
+    buzzerChannel
+  );
+
+  buzzerOff();
+
+  analogReadResolution(12);
+
+  Wire.begin();
+  Wire.setClock(400000);
+
+  Serial.println();
+  Serial.println(
+    "Routine Reinforcement Armband starting..."
+  );
+
+  Serial.println(
+    "Keep arm still and flex sensor straight."
+  );
+
+  setupOLED();
+
+  setupMPU6050();
+
+  setupHeartSensor();
+
+  calibrateFlexSensor();
+
+  setupBluetooth();
+
+  lastMovementTime = millis();
+
+  Serial.println("Armband ready.");
+
+  showStartupComplete();
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+// =====================================================
+// LOOP
+// =====================================================
 
+void loop() {
+
+  unsigned long currentTime = millis();
+
+  // Heart-rate sensor needs frequent checking
+  checkHeartRate();
+
+  // Button
+  if (buttonPressed()) {
+
+    alertsMuted = !alertsMuted;
+
+    stopOutputs();
+
+    if (alertsMuted) {
+      Serial.println("Alerts muted.");
+    }
+    else {
+      Serial.println("Alerts unmuted.");
+    }
+  }
+
+  // Movement
+  if (
+    currentTime - previousMotionCheck
+    >= motionInterval
+  ) {
+
+    previousMotionCheck = currentTime;
+
+    checkMovement();
+  }
+
+  // Temperature
+  if (
+    currentTime - previousTemperatureCheck
+    >= temperatureInterval
+  ) {
+
+    previousTemperatureCheck =
+      currentTime;
+
+    checkTemperature();
+  }
+
+  // Flex
+  if (
+    currentTime - previousFlexCheck
+    >= flexInterval
+  ) {
+
+    previousFlexCheck =
+      currentTime;
+
+    checkFlexSensor();
+  }
+
+  updateHeartRateAlert();
+
+  updateAlertOutputs();
+
+  manageBluetoothConnection();
+
+  // OLED
+  if (
+    currentTime - previousOLEDUpdate
+    >= oledInterval
+  ) {
+
+    previousOLEDUpdate =
+      currentTime;
+
+    updateOLED();
+  }
+
+  // Send website data
+  if (
+    currentTime - previousDataUpdate
+    >= dataInterval
+  ) {
+
+    previousDataUpdate =
+      currentTime;
+
+    printWebsiteData();
+
+    sendBluetoothData();
+  }
+}
+
+// =====================================================
+// OLED SETUP
+// =====================================================
+
+void setupOLED() {
+
+  oledFound =
+    display.begin(
+      SSD1306_SWITCHCAPVCC,
+      OLED_ADDRESS
+    );
+
+  if (!oledFound) {
+
+    Serial.println(
+      "OLED not detected."
+    );
+
+    return;
+  }
+
+  Serial.println(
+    "OLED detected."
+  );
+
+  display.clearDisplay();
+
+  display.setTextColor(
+    SSD1306_WHITE
+  );
+
+  display.setTextSize(1);
+
+  display.setCursor(0, 0);
+  display.println(
+    "ROUTINE ARMBAND"
+  );
+
+  display.setCursor(0, 20);
+  display.println(
+    "Starting sensors..."
+  );
+
+  display.setCursor(0, 38);
+  display.println(
+    "Keep arm still."
+  );
+
+  display.display();
+}
+
+// =====================================================
+// MPU6050 SETUP
+// =====================================================
+
+void setupMPU6050() {
+
+  Wire.beginTransmission(
+    MPU_ADDR
+  );
+
+  byte error =
+    Wire.endTransmission();
+
+  if (error != 0) {
+
+    accelerometerFound = false;
+
+    Serial.println(
+      "MPU6050 not detected."
+    );
+
+    return;
+  }
+
+  accelerometerFound = true;
+
+  // Wake MPU6050
+  Wire.beginTransmission(
+    MPU_ADDR
+  );
+
+  Wire.write(0x6B);
+  Wire.write(0);
+
+  Wire.endTransmission();
+
+  delay(300);
+
+  calibrateMovementSensor();
+
+  Serial.println(
+    "MPU6050 detected."
+  );
+}
+
+// =====================================================
+// HEART-RATE SENSOR SETUP
+// =====================================================
+
+void setupHeartSensor() {
+
+  if (
+    !heartSensor.begin(
+      Wire,
+      I2C_SPEED_FAST
+    )
+  ) {
+
+    heartSensorFound = false;
+
+    Serial.println(
+      "Heart-rate sensor not detected."
+    );
+
+    return;
+  }
+
+  heartSensorFound = true;
+
+  byte ledBrightness = 31;
+  byte sampleAverage = 4;
+  byte ledMode = 2;
+
+  int sampleRate = 100;
+  int pulseWidth = 411;
+  int adcRange = 4096;
+
+  heartSensor.setup(
+    ledBrightness,
+    sampleAverage,
+    ledMode,
+    sampleRate,
+    pulseWidth,
+    adcRange
+  );
+
+  heartSensor.setPulseAmplitudeRed(
+    0x1F
+  );
+
+  heartSensor.setPulseAmplitudeIR(
+    0x1F
+  );
+
+  heartSensor.setPulseAmplitudeGreen(
+    0
+  );
+
+  Serial.println(
+    "Heart-rate sensor detected."
+  );
+}
+
+// =====================================================
+// BLUETOOTH SETUP
+// =====================================================
+
+void setupBluetooth() {
+
+  BLEDevice::init(
+    "Routine Armband"
+  );
+
+  bleServer =
+    BLEDevice::createServer();
+
+  bleServer->setCallbacks(
+    new ArmbandServerCallbacks()
+  );
+
+  BLEService* armbandService =
+    bleServer->createService(
+      BLE_SERVICE_UUID
+    );
+
+  bleDataCharacteristic =
+    armbandService
+      ->createCharacteristic(
+        BLE_DATA_UUID,
+
+        BLECharacteristic::PROPERTY_READ |
+        BLECharacteristic::PROPERTY_NOTIFY
+      );
+
+  bleDataCharacteristic
+    ->addDescriptor(
+      new BLE2902()
+    );
+
+  bleDataCharacteristic
+    ->setValue(
+      "Armband ready"
+    );
+
+  armbandService->start();
+
+  BLEAdvertising* advertising =
+    BLEDevice::getAdvertising();
+
+  advertising->addServiceUUID(
+    BLE_SERVICE_UUID
+  );
+
+  advertising->setScanResponse(
+    true
+  );
+
+  advertising->start();
+
+  Serial.println(
+    "Bluetooth started."
+  );
+
+  Serial.println(
+    "Device: Routine Armband"
+  );
+}
+
+// =====================================================
+// BLUETOOTH CONNECTION
+// =====================================================
+
+void manageBluetoothConnection() {
+
+  if (
+    !bluetoothConnected &&
+    previouslyBluetoothConnected
+  ) {
+
+    delay(100);
+
+    if (bleServer != nullptr) {
+
+      bleServer
+        ->startAdvertising();
+    }
+
+    previouslyBluetoothConnected =
+      false;
+
+    Serial.println(
+      "Bluetooth disconnected."
+    );
+  }
+
+  if (
+    bluetoothConnected &&
+    !previouslyBluetoothConnected
+  ) {
+
+    previouslyBluetoothConnected =
+      true;
+
+    Serial.println(
+      "Bluetooth connected."
+    );
+  }
+}
+
+// =====================================================
+// START SCREEN
+// =====================================================
+
+void showStartupComplete() {
+
+  if (!oledFound) {
+    return;
+  }
+
+  display.clearDisplay();
+
+  display.setTextColor(
+    SSD1306_WHITE
+  );
+
+  display.setTextSize(1);
+
+  display.setCursor(0, 8);
+
+  display.println(
+    "CALIBRATION COMPLETE"
+  );
+
+  display.setCursor(0, 27);
+
+  display.println(
+    "Armband ready!"
+  );
+
+  display.setCursor(0, 44);
+
+  display.println(
+    "Place finger on HR."
+  );
+
+  display.display();
+
+  delay(1000);
+}
+
+// =====================================================
+// HEART RATE
+// =====================================================
+
+void checkHeartRate() {
+
+  if (!heartSensorFound) {
+
+    fingerDetected = false;
+
+    return;
+  }
+
+  infraredReading =
+    heartSensor.getIR();
+
+  bool newFingerDetected =
+    infraredReading >=
+    fingerDetectionThreshold;
+
+  if (!newFingerDetected) {
+
+    if (fingerDetected) {
+
+      resetHeartRateReadings();
+    }
+
+    fingerDetected = false;
+
+    return;
+  }
+
+  fingerDetected = true;
+
+  if (
+    checkForBeat(
+      infraredReading
+    )
+  ) {
+
+    unsigned long currentBeatTime =
+      millis();
+
+    if (previousBeatTime > 0) {
+
+      unsigned long
+      timeBetweenBeats =
+
+        currentBeatTime -
+        previousBeatTime;
+
+      float calculatedBPM =
+
+        60.0 /
+        (
+          timeBetweenBeats /
+          1000.0
+        );
+
+      if (
+        calculatedBPM >= 30 &&
+        calculatedBPM <= 220
+      ) {
+
+        currentBPM =
+          calculatedBPM;
+
+        lastValidBeatTime =
+          currentBeatTime;
+
+        bpmReadings[
+          readingPosition
+        ] =
+          (byte)currentBPM;
+
+        readingPosition++;
+
+        readingPosition %=
+          RATE_SIZE;
+
+        if (
+          readingsCollected <
+          RATE_SIZE
+        ) {
+
+          readingsCollected++;
+        }
+
+        int totalBPM = 0;
+
+        for (
+          byte i = 0;
+          i < readingsCollected;
+          i++
+        ) {
+
+          totalBPM +=
+            bpmReadings[i];
+        }
+
+        averageBPM =
+          totalBPM /
+          readingsCollected;
+      }
+    }
+
+    previousBeatTime =
+      currentBeatTime;
+  }
+
+  // Clear stale BPM
+  if (
+    lastValidBeatTime > 0 &&
+    millis() -
+      lastValidBeatTime >
+      3000
+  ) {
+
+    resetHeartRateReadings();
+
+    fingerDetected = true;
+  }
+}
+
+// =====================================================
+// RESET HEART RATE
+// =====================================================
+
+void resetHeartRateReadings() {
+
+  currentBPM = 0;
+
+  averageBPM = 0;
+
+  previousBeatTime = 0;
+
+  lastValidBeatTime = 0;
+
+  readingPosition = 0;
+
+  readingsCollected = 0;
+
+  heartRateAlert = false;
+
+  heartRateLow = false;
+
+  heartRateHigh = false;
+
+  for (
+    byte i = 0;
+    i < RATE_SIZE;
+    i++
+  ) {
+
+    bpmReadings[i] = 0;
+  }
+}
+
+// =====================================================
+// HEART-RATE ALERT
+// =====================================================
+
+void updateHeartRateAlert() {
+
+  bool restingLongEnough =
+
+    millis() -
+    lastMovementTime >=
+    restingDelay;
+
+  bool validHeartReading =
+
+    heartSensorFound &&
+    fingerDetected &&
+    readingsCollected >= 3 &&
+    averageBPM > 0;
+
+  heartRateLow = false;
+
+  heartRateHigh = false;
+
+  heartRateAlert = false;
+
+  if (
+    !validHeartReading ||
+    !restingLongEnough
+  ) {
+
+    return;
+  }
+
+  if (
+    averageBPM <
+    lowHeartRateBPM
+  ) {
+
+    heartRateLow = true;
+
+    heartRateAlert = true;
+  }
+
+  if (
+    averageBPM >
+    highHeartRateBPM
+  ) {
+
+    heartRateHigh = true;
+
+    heartRateAlert = true;
+  }
+}
+
+// =====================================================
+// MOVEMENT CALIBRATION
+// =====================================================
+
+void calibrateMovementSensor() {
+
+  long totalX = 0;
+  long totalY = 0;
+  long totalZ = 0;
+
+  const int samples = 50;
+
+  int successfulSamples = 0;
+
+  for (
+    int i = 0;
+    i < samples;
+    i++
+  ) {
+
+    int16_t x;
+    int16_t y;
+    int16_t z;
+
+    if (
+      readAccelerometer(
+        x,
+        y,
+        z
+      )
+    ) {
+
+      totalX += x;
+      totalY += y;
+      totalZ += z;
+
+      successfulSamples++;
+    }
+
+    delay(20);
+  }
+
+  if (
+    successfulSamples > 0
+  ) {
+
+    baselineX =
+      totalX /
+      successfulSamples;
+
+    baselineY =
+      totalY /
+      successfulSamples;
+
+    baselineZ =
+      totalZ /
+      successfulSamples;
+  }
+}
+
+// =====================================================
+// MOVEMENT CHECK
+// =====================================================
+
+void checkMovement() {
+
+  if (!accelerometerFound) {
+
+    movementLevel = 0;
+
+    isMoving = false;
+
+    motionAlert = false;
+
+    return;
+  }
+
+  int16_t x;
+  int16_t y;
+  int16_t z;
+
+  if (
+    !readAccelerometer(
+      x,
+      y,
+      z
+    )
+  ) {
+
+    return;
+  }
+
+  long differenceX =
+    abs(
+      (long)x -
+      baselineX
+    );
+
+  long differenceY =
+    abs(
+      (long)y -
+      baselineY
+    );
+
+  long differenceZ =
+    abs(
+      (long)z -
+      baselineZ
+    );
+
+  long totalMovement =
+
+    differenceX +
+    differenceY +
+    differenceZ;
+
+  movementLevel =
+
+    totalMovement /
+    16384.0;
+
+  isMoving =
+
+    movementLevel >
+    movementDisplayThreshold;
+
+  motionAlert =
+
+    movementLevel >
+    motionAlertThreshold;
+
+  if (isMoving) {
+
+    lastMovementTime =
+      millis();
+  }
+}
+
+// =====================================================
+// READ MPU6050
+// =====================================================
+
+bool readAccelerometer(
+  int16_t& x,
+  int16_t& y,
+  int16_t& z
+) {
+
+  Wire.beginTransmission(
+    MPU_ADDR
+  );
+
+  Wire.write(0x3B);
+
+  if (
+    Wire.endTransmission(
+      false
+    ) != 0
+  ) {
+
+    return false;
+  }
+
+  Wire.requestFrom(
+    MPU_ADDR,
+    6,
+    true
+  );
+
+  if (
+    Wire.available() < 6
+  ) {
+
+    return false;
+  }
+
+  x =
+    (Wire.read() << 8) |
+    Wire.read();
+
+  y =
+    (Wire.read() << 8) |
+    Wire.read();
+
+  z =
+    (Wire.read() << 8) |
+    Wire.read();
+
+  return true;
+}
+
+// =====================================================
+// TEMPERATURE
+// =====================================================
+
+void checkTemperature() {
+
+  uint32_t totalMillivolts = 0;
+
+  const int samples = 10;
+
+  for (
+    int i = 0;
+    i < samples;
+    i++
+  ) {
+
+    totalMillivolts +=
+
+      analogReadMilliVolts(
+        tempPin
+      );
+  }
+
+  float voltageMillivolts =
+
+    totalMillivolts /
+    float(samples);
+
+  float tempC =
+
+    (
+      voltageMillivolts -
+      500.0
+    ) /
+    10.0;
+
+  currentTempF =
+
+    (
+      tempC *
+      9.0 /
+      5.0
+    ) +
+    32.0;
+
+  temperatureAlert =
+
+    currentTempF <
+      lowTempF ||
+
+    currentTempF >
+      highTempF;
+}
+
+// =====================================================
+// FLEX CALIBRATION
+// =====================================================
+
+void calibrateFlexSensor() {
+
+  long totalReading = 0;
+
+  const int samples = 50;
+
+  for (
+    int i = 0;
+    i < samples;
+    i++
+  ) {
+
+    totalReading +=
+      analogRead(
+        flexPin
+      );
+
+    delay(20);
+  }
+
+  flexBaseline =
+
+    totalReading /
+    samples;
+
+  Serial.print(
+    "Flex baseline: "
+  );
+
+  Serial.println(
+    flexBaseline
+  );
+}
+
+// =====================================================
+// FLEX READING
+// =====================================================
+
+void checkFlexSensor() {
+
+  long totalReading = 0;
+
+  const int samples = 5;
+
+  for (
+    int i = 0;
+    i < samples;
+    i++
+  ) {
+
+    totalReading +=
+      analogRead(
+        flexPin
+      );
+  }
+
+  currentFlexReading =
+
+    totalReading /
+    samples;
+
+  currentFlexChange =
+
+    abs(
+      currentFlexReading -
+      flexBaseline
+    );
+
+  flexAlert =
+
+    currentFlexChange >
+    flexDeltaThreshold;
+}
+
+// =====================================================
+// OLED DISPLAY
+// =====================================================
+
+void updateOLED() {
+
+  if (!oledFound) {
+    return;
+  }
+
+  display.clearDisplay();
+
+  display.setTextColor(
+    SSD1306_WHITE
+  );
+
+  display.setTextSize(1);
+
+  // Bluetooth
+  display.setCursor(0, 0);
+
+  display.print(
+    "ARMBAND BT:"
+  );
+
+  if (
+    bluetoothConnected
+  ) {
+
+    display.println("ON");
+  }
+  else {
+
+    display.println("--");
+  }
+
+  // Heart rate
+  display.setCursor(0, 10);
+
+  display.print("HR: ");
+
+  if (
+    !heartSensorFound
+  ) {
+
+    display.println(
+      "SENSOR ERROR"
+    );
+  }
+
+  else if (
+    !fingerDetected
+  ) {
+
+    display.println(
+      "-- no finger"
+    );
+  }
+
+  else if (
+    readingsCollected == 0
+  ) {
+
+    display.println(
+      "measuring..."
+    );
+  }
+
+  else {
+
+    display.print(
+      averageBPM
+    );
+
+    display.print(
+      " BPM "
+    );
+
+    if (
+      heartRateLow
+    ) {
+
+      display.println("LOW");
+    }
+
+    else if (
+      heartRateHigh
+    ) {
+
+      display.println("HIGH");
+    }
+
+    else {
+
+      display.println("OK");
+    }
+  }
+
+  // Temperature
+  display.setCursor(0, 20);
+
+  display.print(
+    "Temp: "
+  );
+
+  display.print(
+    currentTempF,
+    1
+  );
+
+  display.println(
+    " F"
+  );
+
+  // Flex
+  display.setCursor(0, 30);
+
+  display.print(
+    "Flex: "
+  );
+
+  if (flexAlert) {
+
+    display.print(
+      "BENT "
+    );
+  }
+
+  else {
+
+    display.print(
+      "NORMAL "
+    );
+  }
+
+  display.println(
+    currentFlexChange
+  );
+
+  // Movement
+  display.setCursor(0, 40);
+
+  display.print(
+    "Motion: "
+  );
+
+  if (
+    !accelerometerFound
+  ) {
+
+    display.println(
+      "ERROR"
+    );
+  }
+
+  else if (
+    isMoving
+  ) {
+
+    display.print(
+      "MOVING "
+    );
+
+    display.println(
+      movementLevel,
+      2
+    );
+  }
+
+  else {
+
+    display.print(
+      "STILL "
+    );
+
+    display.println(
+      movementLevel,
+      2
+    );
+  }
+
+  // Status
+  display.setCursor(0, 53);
+
+  display.print(
+    "Status: "
+  );
+
+  display.println(
+    getStatusText()
+  );
+
+  display.display();
+}
+
+// =====================================================
+// STATUS
+// =====================================================
+
+const char* getStatusText() {
+
+  if (alertsMuted) {
+
+    return "MUTED";
+  }
+
+  int alertCount = 0;
+
+  if (motionAlert) {
+    alertCount++;
+  }
+
+  if (temperatureAlert) {
+    alertCount++;
+  }
+
+  if (flexAlert) {
+    alertCount++;
+  }
+
+  if (heartRateAlert) {
+    alertCount++;
+  }
+
+  if (alertCount >= 2) {
+
+    return "MULTIPLE";
+  }
+
+  if (heartRateLow) {
+
+    return "HEART LOW";
+  }
+
+  if (heartRateHigh) {
+
+    return "HEART HIGH";
+  }
+
+  if (motionAlert) {
+
+    return "MOTION";
+  }
+
+  if (temperatureAlert) {
+
+    return "TEMP";
+  }
+
+  if (flexAlert) {
+
+    return "FLEX";
+  }
+
+  return "NORMAL";
+}
+
+// =====================================================
+// ALERT OUTPUTS
+// =====================================================
+
+void updateAlertOutputs() {
+
+  if (alertsMuted) {
+
+    stopOutputs();
+
+    return;
+  }
+
+  int activeAlerts = 0;
+
+  if (motionAlert) {
+    activeAlerts++;
+  }
+
+  if (temperatureAlert) {
+    activeAlerts++;
+  }
+
+  if (flexAlert) {
+    activeAlerts++;
+  }
+
+  if (heartRateAlert) {
+    activeAlerts++;
+  }
+
+  if (activeAlerts == 0) {
+
+    stopOutputs();
+
+    return;
+  }
+
+  int frequency = 1000;
+
+  unsigned long period = 1000;
+
+  unsigned long onTime = 500;
+
+  if (activeAlerts >= 2) {
+
+    frequency = 1900;
+
+    period = 400;
+
+    onTime = 200;
+  }
+
+  else if (
+    heartRateAlert
+  ) {
+
+    frequency = 2600;
+
+    period = 300;
+
+    onTime = 150;
+  }
+
+  else if (
+    flexAlert
+  ) {
+
+    frequency = 2200;
+
+    period = 300;
+
+    onTime = 120;
+  }
+
+  else if (
+    temperatureAlert
+  ) {
+
+    frequency = 1500;
+
+    period = 500;
+
+    onTime = 200;
+  }
+
+  else if (
+    motionAlert
+  ) {
+
+    frequency = 1000;
+
+    period = 1000;
+
+    onTime = 500;
+  }
+
+  bool alertIsOn =
+
+    millis() %
+    period <
+    onTime;
+
+  if (alertIsOn) {
+
+    digitalWrite(
+      motorPin,
+      HIGH
+    );
+
+    buzzerOn(
+      frequency
+    );
+  }
+
+  else {
+
+    stopOutputs();
+  }
+}
+
+// =====================================================
+// BUTTON
+// =====================================================
+
+bool buttonPressed() {
+
+  bool currentButtonState =
+    digitalRead(
+      buttonPin
+    );
+
+  bool pressed = false;
+
+  if (
+    previousButtonState == HIGH &&
+    currentButtonState == LOW
+  ) {
+
+    delay(20);
+
+    currentButtonState =
+      digitalRead(
+        buttonPin
+      );
+
+    if (
+      currentButtonState == LOW
+    ) {
+
+      pressed = true;
+    }
+  }
+
+  previousButtonState =
+    currentButtonState;
+
+  return pressed;
+}
+
+// =====================================================
+// MOTOR + BUZZER
+// =====================================================
+
+void buzzerOn(
+  int frequency
+) {
+
+  ledcWriteTone(
+    buzzerChannel,
+    frequency
+  );
+}
+
+void buzzerOff() {
+
+  ledcWriteTone(
+    buzzerChannel,
+    0
+  );
+}
+
+void stopOutputs() {
+
+  digitalWrite(
+    motorPin,
+    LOW
+  );
+
+  buzzerOff();
+}
+
+// =====================================================
+// USB SERIAL DATA
+// =====================================================
+
+// DATA,temp,flex,movement,bpm,muted,status
+
+void printWebsiteData() {
+
+  Serial.print(
+    "DATA,"
+  );
+
+  Serial.print(
+    currentTempF,
+    1
+  );
+
+  Serial.print(",");
+
+  Serial.print(
+    currentFlexChange
+  );
+
+  Serial.print(",");
+
+  Serial.print(
+    movementLevel,
+    2
+  );
+
+  Serial.print(",");
+
+  if (fingerDetected) {
+
+    if (
+      readingsCollected >= 3
+    ) {
+
+      Serial.print(
+        averageBPM
+      );
+    }
+
+    else if (
+      currentBPM > 0
+    ) {
+
+      Serial.print(
+        round(currentBPM)
+      );
+    }
+
+    else {
+
+      Serial.print(0);
+    }
+  }
+
+  else {
+
+    Serial.print(0);
+  }
+
+  Serial.print(",");
+
+  Serial.print(
+    alertsMuted ? 1 : 0
+  );
+
+  Serial.print(",");
+
+  Serial.println(
+    getStatusText()
+  );
+}
+
+// =====================================================
+// BLUETOOTH DATA
+// =====================================================
+
+// Packet A:
+// A,temp,flex,movement
+//
+// Packet B:
+// B,bpm,muted,status
+
+void sendBluetoothData() {
+
+  if (
+    !bluetoothConnected ||
+    bleDataCharacteristic ==
+      nullptr
+  ) {
+
+    return;
+  }
+
+  // ------------------------
+  // PACKET A
+  // ------------------------
+
+  String packetA =
+
+    "A," +
+
+    String(
+      currentTempF,
+      1
+    ) +
+
+    "," +
+
+    String(
+      currentFlexChange
+    ) +
+
+    "," +
+
+    String(
+      movementLevel,
+      2
+    );
+
+  bleDataCharacteristic
+    ->setValue(
+      packetA.c_str()
+    );
+
+  bleDataCharacteristic
+    ->notify();
+
+  delay(25);
+
+  // ------------------------
+  // HEART RATE
+  // ------------------------
+
+  int bluetoothBPM = 0;
+
+  if (fingerDetected) {
+
+    if (
+      readingsCollected >= 3
+    ) {
+
+      bluetoothBPM =
+        averageBPM;
+    }
+
+    else if (
+      currentBPM > 0
+    ) {
+
+      bluetoothBPM =
+        round(
+          currentBPM
+        );
+    }
+  }
+
+  // ------------------------
+  // PACKET B
+  // ------------------------
+
+  String packetB =
+
+    "B," +
+
+    String(
+      bluetoothBPM
+    ) +
+
+    "," +
+
+    String(
+      alertsMuted ?
+      1 :
+      0
+    ) +
+
+    "," +
+
+    String(
+      getStatusText()
+    );
+
+  bleDataCharacteristic
+    ->setValue(
+      packetB.c_str()
+    );
+
+  bleDataCharacteristic
+    ->notify();
 }
 ```
 
@@ -84,11 +1893,17 @@ void loop() {
 | 9V Barrel Jack | Connects the 9V battery to the prototype’s power circuit. It allows the project to be tested without remaining connected to a computer. | $6.00 | [Link](https://www.amazon.com/dp/B07FDS11ZY) |
 | Digital Multimeter | Measures voltage, resistance, and electrical continuity. It helps check battery voltage, test connections, and locate damaged or disconnected wires. | $9.99 | [Link](https://www.amazon.com/dp/B0CXM242J1) |
 | 9V Batteries | Provide a portable power supply for the project during testing. A suitable voltage regulator must be used before powering the ESP32. | $12.37 | [Link](https://www.amazon.com/dp/B00MH4QM1S) |
+| OLED Screen | Displays live information directly on the armband, including temperature, movement, flex change, heart rate, Bluetooth connection, and alert status.  | [Link](https://www.amazon.com/UCTRONICS-SSD1306-Self-Luminous-Display-Raspberry/dp/B072Q2X2LL/) |
+| Flex Sensor | Detects changes in bending so the armband can recognize when the user's arm changes position and trigger a flex alert when the programmed threshold is exceeded. | [Link](https://www.amazon.com/dp/B0FDJDBG4S) |
+| Solderless Breadboard | Provides additional space for the modified circuit and allows the armband components to be divided across two connected breadboards.  | [Link](https://www.amazon.com/gp/product/B00LSG5BJK/) |
+| Extra Jumper Wires | Connect components between the two breadboards and provide additional power and connections.| [Link](https://www.amazon.com/gp/product/B01EV70C78/) |
 
 # Other Resources/Examples
 One of the best parts about Github is that you can view how other people set up their own work. Here are some past BSE portfolios that are awesome examples. You can view how they set up their portfolio, and you can view their index.md files to understand how they implemented different portfolio components.
-- [Example 1](https://trashytuber.github.io/YimingJiaBlueStamp/)
-- [Example 2](https://sviatil0.github.io/Sviatoslav_BSE/)
-- [Example 3](https://arneshkumar.github.io/arneshbluestamp/)
+- [Base Project Manual](https://docs.sunfounder.com/projects/3in1-kit-v2/en/latest/car_project/car_project.html)
+- [Saagnik’s Floor Cleaning Robot Portfolio](https://smitra123.github.io/Saagnik-Mitra-s-BSE-Portfolio)
+- [Flex Sensor Tutorial](https://www.youtube.com/watch?v=_tXWoplbqWo)
+- [Heart Rate Sensor Tutorial](https://www.youtube.com/watch?v=hPzJdDlBiQ0)
+- [OLED Display Tutorial](https://www.youtube.com/watch?v=___p9JYbTc0)
 
 To watch the BSE tutorial on how to create a portfolio, click here.

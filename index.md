@@ -28,7 +28,6 @@ In the future, I would like to make the armband smaller and more “wearable” 
 
 # Second Milestone
 
-**Don't forget to replace the text below with the embedding for your milestone video. Go to Youtube, click Share -> Embed, and copy and paste the code to replace what's below.**
 <iframe width="560" height="315" src="https://www.youtube.com/embed/tu1wzGVcvsc" title="Milestone 2 - Routine Reinforcement Armband" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 Ever since I achieved my initial milestone, I have dedicated my time and efforts to completing the foundation of my Routine Reinforcement Armband. I wired and programmed the main components of the armband, namely the MPU6050 movement sensor, TMP36 temperature sensor, buzzer, vibration motor, and mute button. Not only did I implement the wiring, but I also made sure that the armband is able to calibrate and set alert thresholds, which allow it to detect movement and temperature variations.
@@ -52,12 +51,25 @@ To begin with, I connected the ESP32 to my computer and uploaded a program which
 A difficulty that I encountered was ensuring that the wiring, the pins, the board settings, and the Arduino libraries were all correct. For my next milestone, I intend to combine the sensors so that an alert is triggered if there is movement detected. Later on, I plan to connect the armband to Wi-Fi, set up a website to show the data it collects, as well as design the complete system into a wearable form.
 
 # Schematics 
-<img src="routine-armband-schematic.jpg" alt="Routine Reinforcement Armband Schematic" width="850">
+<a href="routine-armband-schematic.png">
+  <img src="routine-armband-schematic.png" alt="Routine Reinforcement Armband Schematic" style="width:100%; max-width:1000px; height:auto;">
+</a>
+
+*Click the schematic to view it at full size.*
 
 # Code
-Here's where you'll put your code. The syntax below places it into a block of code. Follow the guide [here]([url](https://www.markdownguide.org/extended-syntax/)) to learn how to customize it to your project needs. 
+
 
 ```c++
+<h2>Final Arduino Code</h2>
+
+<details>
+<summary><strong>Click to view full Arduino code</strong></summary>
+
+<div style="max-height:500px; overflow:auto; border:1px solid #ccc; padding:15px; margin-top:10px; border-radius:8px; background-color:#f6f8fa;">
+<pre><code>
+Yep — here is the full final Arduino code for the entire Routine Reinforcement Armband, including the OLED, MPU6050, TMP36, flex sensor, heart-rate sensor, buzzer, vibration motor, mute button, USB Serial output, and Bluetooth Low Energy connection to your website.
+
 #include <Wire.h>
 
 #include <Adafruit_GFX.h>
@@ -1876,6 +1888,11 @@ void sendBluetoothData() {
   bleDataCharacteristic
     ->notify();
 }
+</code></pre>
+</div>
+
+</details>
+
 ```
 
 # Bill of Materials
@@ -1893,17 +1910,17 @@ void sendBluetoothData() {
 | 9V Barrel Jack | Connects the 9V battery to the prototype’s power circuit. It allows the project to be tested without remaining connected to a computer. | $6.00 | [Link](https://www.amazon.com/dp/B07FDS11ZY) |
 | Digital Multimeter | Measures voltage, resistance, and electrical continuity. It helps check battery voltage, test connections, and locate damaged or disconnected wires. | $9.99 | [Link](https://www.amazon.com/dp/B0CXM242J1) |
 | 9V Batteries | Provide a portable power supply for the project during testing. A suitable voltage regulator must be used before powering the ESP32. | $12.37 | [Link](https://www.amazon.com/dp/B00MH4QM1S) |
-| OLED Screen | Displays live information directly on the armband, including temperature, movement, flex change, heart rate, Bluetooth connection, and alert status.  | [Link](https://www.amazon.com/UCTRONICS-SSD1306-Self-Luminous-Display-Raspberry/dp/B072Q2X2LL/) |
-| Flex Sensor | Detects changes in bending so the armband can recognize when the user's arm changes position and trigger a flex alert when the programmed threshold is exceeded. | [Link](https://www.amazon.com/dp/B0FDJDBG4S) |
-| Solderless Breadboard | Provides additional space for the modified circuit and allows the armband components to be divided across two connected breadboards.  | [Link](https://www.amazon.com/gp/product/B00LSG5BJK/) |
-| Extra Jumper Wires | Connect components between the two breadboards and provide additional power and connections.| [Link](https://www.amazon.com/gp/product/B01EV70C78/) |
+| OLED Screen | Displays live information directly on the armband, including temperature, movement, flex change, heart rate, Bluetooth connection, and alert status.  | $6.99| [Link](https://www.amazon.com/UCTRONICS-SSD1306-Self-Luminous-Display-Raspberry/dp/B072Q2X2LL/) |
+| Flex Sensor | Detects changes in bending so the armband can recognize when the user's arm changes position and trigger a flex alert when the programmed threshold is exceeded. | $7.29 [Link](https://www.amazon.com/dp/B0FDJDBG4S) |
+| Solderless Breadboard | Provides additional space for the modified circuit and allows the armband components to be divided across two connected breadboards.  |$7.49|[Link](https://www.amazon.com/gp/product/B00LSG5BJK/) |
+| Extra Jumper Wires | Connect components between the two breadboards and provide additional power and connections.|$6.98| [Link](https://www.amazon.com/gp/product/B01EV70C78/) |
 
 # Other Resources/Examples
-One of the best parts about Github is that you can view how other people set up their own work. Here are some past BSE portfolios that are awesome examples. You can view how they set up their portfolio, and you can view their index.md files to understand how they implemented different portfolio components.
+
 - [Base Project Manual](https://docs.sunfounder.com/projects/3in1-kit-v2/en/latest/car_project/car_project.html)
 - [Saagnik’s Floor Cleaning Robot Portfolio](https://smitra123.github.io/Saagnik-Mitra-s-BSE-Portfolio)
 - [Flex Sensor Tutorial](https://www.youtube.com/watch?v=_tXWoplbqWo)
 - [Heart Rate Sensor Tutorial](https://www.youtube.com/watch?v=hPzJdDlBiQ0)
 - [OLED Display Tutorial](https://www.youtube.com/watch?v=___p9JYbTc0)
 
-To watch the BSE tutorial on how to create a portfolio, click here.
+

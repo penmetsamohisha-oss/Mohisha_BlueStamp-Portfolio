@@ -1,10 +1,21 @@
 # Routine Reinforcement Armband
 This project features an armband that uses an Arduino Nano ESP32 to perform routine correspondence by monitoring an individual's movement and temperature while giving instructions through a buzzer and vibration motor. Moreover, I added various sensors, such as a flex sensor to measure arm bending, a heart-rate detector to measure beats per minute, and an OLED display to show all measurements on the device. Additional improvements involve rearranging the components on two breadboards linked together, which makes the armband feasible to wear. Finally, I designed a website to display live readings, alert conditions, and heart-rate and movement graphs by connecting to the controllers via Bluetooth Low Energy. 
 
-<p>Mohisha P | Aberdeen High School | Biomedical Engineering | Incoming Sophomore</p>
+| Engineer | School | Area of Interest | Grade |
+| --- | --- | --- | --- |
+| Mohisha P | Aberdeen High School | Biomedical Engineering | Incoming Sophomore |
 
-<img src="routine-armband.jpg" alt="Routine Reinforcement Armband" width="650">
+<br>
 
+<p align="center">
+  <a href="routine-armband.jpg">
+    <img src="routine-armband.jpg"
+         alt="Mohisha with completed Routine Reinforcement Armband"
+         style="display:block; width:100%; max-width:900px; height:auto; margin:auto;">
+  </a>
+</p>
+
+<p align="center"><em>Completed Routine Reinforcement Armband</em></p>
 
 
 # Final Milestone
@@ -1911,7 +1922,7 @@ void sendBluetoothData() {
 | Digital Multimeter | Measures voltage, resistance, and electrical continuity. It helps check battery voltage, test connections, and locate damaged or disconnected wires. | $9.99 | [Link](https://www.amazon.com/dp/B0CXM242J1) |
 | 9V Batteries | Provide a portable power supply for the project during testing. A suitable voltage regulator must be used before powering the ESP32. | $12.37 | [Link](https://www.amazon.com/dp/B00MH4QM1S) |
 | OLED Screen | Displays live information directly on the armband, including temperature, movement, flex change, heart rate, Bluetooth connection, and alert status.  | $6.99| [Link](https://www.amazon.com/UCTRONICS-SSD1306-Self-Luminous-Display-Raspberry/dp/B072Q2X2LL/) |
-| Flex Sensor | Detects changes in bending so the armband can recognize when the user's arm changes position and trigger a flex alert when the programmed threshold is exceeded. | $7.29 [Link](https://www.amazon.com/dp/B0FDJDBG4S) |
+| Flex Sensor | Detects changes in bending so the armband can recognize when the user's arm changes position and trigger a flex alert when the programmed threshold is exceeded. | $7.29 | [Link](https://www.amazon.com/dp/B0FDJDBG4S) |
 | Solderless Breadboard | Provides additional space for the modified circuit and allows the armband components to be divided across two connected breadboards.  |$7.49|[Link](https://www.amazon.com/gp/product/B00LSG5BJK/) |
 | Extra Jumper Wires | Connect components between the two breadboards and provide additional power and connections.|$6.98| [Link](https://www.amazon.com/gp/product/B01EV70C78/) |
 

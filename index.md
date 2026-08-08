@@ -74,15 +74,11 @@ A difficulty that I encountered was ensuring that the wiring, the pins, the boar
 
 
 ```c++
-<h2>Final Arduino Code</h2>
-
 <details>
 <summary><strong>Click to view full Arduino code</strong></summary>
 
 <div style="max-height:500px; overflow:auto; border:1px solid #ccc; padding:15px; margin-top:10px; border-radius:8px; background-color:#f6f8fa;">
 <pre><code>
-Yep — here is the full final Arduino code for the entire Routine Reinforcement Armband, including the OLED, MPU6050, TMP36, flex sensor, heart-rate sensor, buzzer, vibration motor, mute button, USB Serial output, and Bluetooth Low Energy connection to your website.
-
 #include <Wire.h>
 
 #include <Adafruit_GFX.h>

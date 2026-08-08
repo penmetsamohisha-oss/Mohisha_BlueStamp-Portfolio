@@ -5,13 +5,11 @@ This project features an armband that uses an Arduino Nano ESP32 to perform rout
 | --- | --- | --- | --- |
 | Mohisha P | Aberdeen High School | Biomedical Engineering | Incoming Sophomore |
 
-<br>
-
 <p align="center">
-  <a href="routine-armband.jpg">
-    <img src="routine-armband.jpg"
-         alt="Mohisha with completed Routine Reinforcement Armband"
-         style="display:block; width:100%; max-width:900px; height:auto; margin:auto;">
+  <a href="routine-armband.jpeg">
+    <img src="routine-armband.jpeg"
+         alt="Completed Routine Reinforcement Armband"
+         style="width:100%; max-width:900px; height:auto;">
   </a>
 </p>
 
@@ -62,11 +60,15 @@ To begin with, I connected the ESP32 to my computer and uploaded a program which
 A difficulty that I encountered was ensuring that the wiring, the pins, the board settings, and the Arduino libraries were all correct. For my next milestone, I intend to combine the sensors so that an alert is triggered if there is movement detected. Later on, I plan to connect the armband to Wi-Fi, set up a website to show the data it collects, as well as design the complete system into a wearable form.
 
 # Schematics 
-<a href="routine-armband-schematic.png">
-  <img src="routine-armband-schematic.png" alt="Routine Reinforcement Armband Schematic" style="width:100%; max-width:1000px; height:auto;">
-</a>
+<p align="center">
+  <a href="routine-armband-schematic.png">
+    <img src="routine-armband-schematic.png"
+         alt="Routine Reinforcement Armband Schematic"
+         style="width:100%; max-width:1100px; height:auto;">
+  </a>
+</p>
 
-*Click the schematic to view it at full size.*
+<p align="center"><em>Click the schematic to view it at full size.</em></p>
 
 # Code
 
@@ -1905,6 +1907,17 @@ void sendBluetoothData() {
 </details>
 
 ```
+# Bluetooth Website Dashboard
+
+<p align="center">
+  <a href="routine-armband-website.png">
+    <img src="routine-armband-website.png"
+         alt="Routine Reinforcement Armband Bluetooth Website Dashboard"
+         style="width:100%; max-width:1100px; height:auto;">
+  </a>
+</p>
+
+<p align="center"><em>Bluetooth Low Energy dashboard displaying live armband data.</em></p>
 
 # Bill of Materials
 
